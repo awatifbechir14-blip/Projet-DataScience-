@@ -7,8 +7,8 @@ Le système repose sur un pipeline de streaming utilisant Apache Kafka comme int
  
 **L’architecture suit le flux logique suivant :**
 Producer Python envoie les données dans Topic Kafka `blood_pressure` puis le consummer Python lis ces données afin de classer : 
-• Les données normales sont archivées localement au format JSON.
-• Les données anormales sont indéxées dans Elasticsearch (anomalies) et visualiser sur Kibana
+- Les données normales sont archivées localement au format JSON.
+-  Les données anormales sont indéxées dans Elasticsearch (anomalies) et visualiser sur Kibana
 
 ## 2. Génération des Messages FHIR 
 La génération des données est inspirée du standard FHIR (Fast Healthcare Interoperability Resources), et plus précisément de la ressource Observation utilisée pour représenter des mesures cliniques.
