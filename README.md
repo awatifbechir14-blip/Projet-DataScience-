@@ -345,11 +345,11 @@ Le projet comprend :
 * `consumer.py` : Réception des message et déclenchement du traitement
 * `analysis_module.py` : logique d’analyse développée séparément
 * `docker-compose.yml` : Infrastructure : Kafka, Zookeeper, Elasticsearch, Kibana
-* Detection_anamalies.py: Détection des anomalies selon les seuils médicaux
-* Stockage_traitement_données.py : Traitement et stockage des données normales et anormales
-* index_elasticsearch.json : Documentation de la structure de l'index Elasticsearch
-* patients_normaux.json : Généré automatiquement — archive locale des patients normaux
-* dossier `data/` : stockage local des mesures normales et anormales
+* `Detection_anamalies.py`: Détection des anomalies selon les seuils médicaux
+* `Stockage_traitement_données.py`: Traitement et stockage des données normales et anormales
+* `index_elasticsearch.json` : Documentation de la structure de l'index Elasticsearch
+* `patients_normaux.json`: Généré automatiquement — archive locale des patients normaux
+* `dossier `data/` : stockage local des mesures normales et anormales
 * `README.md` : documentation du projet
 
 ## 10. Auteurs 
