@@ -13,10 +13,9 @@ Dans l'architecture Kafka, le consumer est le composant qui
 reçoit les messages de pressions artérielle envoyé par le Producer dans Kafka
 et les traite en transmettant chaque message à la fonction `traiter_donnees()` du fichier `Stockage_traitement_données.py`
 qui se charge de la détection des anomalies et du stockage. 
-En effet, lorsque Consumer transmet les données sur `traiter_donnees(data)`, ce dernier va :
-   - Appeler `detecter_anomalies()` pour analyser les valeurs
-   - Si normal ( en respectant les seuils defini) il sauvegarde des données dans le fichier local au format JSON nommé `patients_normaux.json`. 
-   - Si anormal, il indexe les données dans Elasticsearch qui seront ensuite visible dans Kibana
+En effet, lorsque Consumer transmet les données sur `traiter_donnees(data)`, ce dernier va appeler `detecter_anomalies()` pour analyser les valeurs: 
+   - Si normal ( en respectant les seuils definis) il sauvegarde des données dans le fichier local au format JSON nommé `patients_normaux.json`. 
+   - Si anormal ( les seuils definis non respectés ) , il indexe les données dans Elasticsearch qui seront ensuite visible dans Kibana
 
  #### Fichier du code : `Consumer.py`
 
