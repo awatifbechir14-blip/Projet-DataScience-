@@ -92,7 +92,7 @@ for message in consumer:
     traiter_donnees(data)
 ```
 
-## 4. Détection des Anomalies (Awatif)
+## 4. Détection des Anomalies 
 
 ### Rôle de détection des anomalies 
 Le code realisé dans cette partie permet d'analyser les valeurs de pression artérielle de chaque patient 
