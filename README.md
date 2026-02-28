@@ -13,7 +13,7 @@ Producer Python envoie les données dans Topic Kafka `blood_pressure` puis le co
 ## 2. Génération des Messages FHIR 
 La génération des données est inspirée du standard FHIR (Fast Healthcare Interoperability Resources), et plus précisément de la ressource Observation utilisée pour représenter des mesures cliniques.
 
-Afin de simplifier le traitement côté consumer, un format JSON allégé a été retenu. Chaque message contient :
+Afin de simplifier le traitement côté consumer, un format JSON a été retenu. Chaque message contient :
 
 * un identifiant court de patient
 * un nom généré aléatoirement
@@ -35,37 +35,35 @@ Exemple de message généré :
 
 Les valeurs sont volontairement générées dans des plages larges :
 
-* systolique : 70 à 200 mmHg
-* diastolique : 40 à 130 mmHg
+- systolique : 70 à 200 mmHg
+-  diastolique : 40 à 130 mmHg
 
-Ces intervalles dépassent les seuils physiologiques normaux afin de produire régulièrement des cas anormaux, ce qui permet de tester efficacement le module d’analyse.
+Ces intervalles dépassent les seuils normaux afin de produire régulièrement des cas anormaux, ce qui permet de tester efficacement le module d’analyse.
 
 La génération repose sur :
-
-* `Faker` pour créer des identités et des horodatages réalistes
-* `random` pour simuler les valeurs de pression
+-  `Faker` pour créer des identités et des horodatages réalistes
+- `random` pour simuler les valeurs de pression
+  
 ## 3. Kafka
-Apache Kafka joue le rôle de broker de messages. Il permet de transporter les observations du producer vers le consumer de manière fiable et ordonnée.
-
+Kafka permet de transporter les observations du producer vers le consumer de manière fiable et ordonnée.
 Les messages sont publiés dans un topic nommé `blood_pressure`. Kafka assure la persistance des messages et garantit leur ordre dans chaque partition.
 
-
 ### 3.1 Producer
-Le fichier `producer.py` est responsable de la génération et de l’envoi des messages.
+Le fichier `producer.py` permet de  générer  et d'envoyer des messages.
 
 Le producer :
 
-* récupère ses paramètres via des variables d’environnement
-* génère un message JSON
-* encode le message en UTF-8
-* envoie le message au topic Kafka
-* affiche un callback de confirmation (topic, partition, offset)
+1. récupère ses paramètres via des variables d’environnement
+2.  génère un message JSON
+3. encode le message en UTF-8
+4. envoie le message au topic Kafka
+5. affiche un callback de confirmation (topic, partition, offset)
 
 L’intervalle d’envoi est configurable via la variable `INTERVAL_SECONDS`, ce qui permet de simuler un flux plus ou moins rapide.
-
 L’augmentation progressive des offsets affichés dans le terminal confirme que les messages sont correctement stockés dans Kafka.
+
 ### 3.2 Consumer
-  #### Rôle du Consumer
+#### Rôle du Consumer
 Dans l'architecture Kafka, le consumer est le composant qui 
 reçoit les messages de pressions artérielle envoyé par le Producer dans Kafka
 et les traite en transmettant chaque message à la fonction `traiter_donnees()` du fichier `Stockage_traitement_données.py`
@@ -74,14 +72,14 @@ En effet, lorsque Consumer transmet les données sur `traiter_donnees(data)`, ce
    - Si normal ( en respectant les seuils definis) il sauvegarde des données dans le fichier local au format JSON nommé `patients_normaux.json`. 
    - Si anormal ( les seuils definis non respectés ) , il indexe les données dans Elasticsearch qui seront ensuite visible dans Kibana
 
- #### Fichier du code : `Consumer.py`
+#### Fichier du code : `Consumer.py`
 
-  #### Fonctionnement détaillé
+#### Fonctionnement détaillé
 1. Au démarrage, le consumer se connecte au topic Kafka `blood_pressure` (le Producer dépose les messages) sur `localhost:9092`
 4. Dès qu'un message arrive, il extrait le contenu JSON  via `message.value`
 5. Il appelle `traiter_donnees()` pour analyser les données du patient afin de les stocker au bon endroit
 
-    #### Code principal
+#### Code principal
 ```python
 consumer = KafkaConsumer(
     'blood_pressure',
@@ -290,10 +288,9 @@ Tableau listant les patients les plus critiques :
   
 ## 7. Prérequis et Installation
 Le projet nécessite :
-
-* Python 3.9 ou supérieur
-* Docker et Docker Compose
-* pip
+-  Python 3.9 ou supérieur
+- Docker et Docker Compose
+- pip
 
 Les dépendances Python sont :
 
@@ -301,6 +298,11 @@ Les dépendances Python sont :
 * faker
 * elasticsearch
 
+Créer et activer l'environnement virtuel**
+```bash
+python -m venv venv
+venv\Scripts\activate
+```
 Après activation d’un environnement virtuel Python, les dépendances peuvent être installées avec :
 
 ```bash
@@ -315,33 +317,42 @@ docker-compose up -d
 
 Une fois les conteneurs actifs, le topic Kafka `blood_pressure` doit être créé avant d’exécuter les scripts Python.
 
+
+
 ## 8. Comment lancer le projet
-1. Démarrer l’infrastructure Docker.
+1. Démarrer l’infrastructure Docker:
+   ```bash
+docker-compose up -d
+```
 2. Créer le topic Kafka `blood_pressure`.
 3. Lancer le producer dans un premier terminal :
-
 ```bash
 python producer.py
 ```
-
 4. Lancer le consumer dans un second terminal :
 
 ```bash
 python consumer.py
 ```
 
-5. Accéder à Kibana via le navigateur à l’adresse configurée par Docker (généralement [http://localhost:5601](http://localhost:5601)).
-6. Créer un index pattern correspondant à `blood_pressure_anomalies` afin de visualiser les anomalies.
+5. Accéder à Kibana via le navigateur à l’adresse configurée par Docker http://localhost:5601
+6. Accéder au dashboard "Système de Surveillance Cardiaque" pour visualiser les anomalies en temps réel.
 
 ## 9. Structure des fichiers
 Le projet comprend :
 
-* `producer.py` : génération et envoi des messages
-* `consumer.py` : réception, analyse et stockage
+* `producer.py` :Génération des messag et envoi dans Kafka
+* `consumer.py` : Réception des message et déclenchement du traitement
 * `analysis_module.py` : logique d’analyse développée séparément
-* `docker-compose.yml` : déploiement de l’infrastructure
+* `docker-compose.yml` : Infrastructure : Kafka, Zookeeper, Elasticsearch, Kibana
+* Detection_anamalies.py: Détection des anomalies selon les seuils médicaux
+* Stockage_traitement_données.py : Traitement et stockage des données normales et anormales
+* index_elasticsearch.json : Documentation de la structure de l'index Elasticsearch
+* patients_normaux.json : Généré automatiquement — archive locale des patients normaux
 * dossier `data/` : stockage local des mesures normales et anormales
 * `README.md` : documentation du projet
 
 ## 10. Auteurs 
-Le projet a été réalisé dans le cadre d’un travail collaboratif. La partie architecture et infrastructure comprend la génération des messages, la mise en place du producer et du consumer, ainsi que l’intégration avec Elasticsearch et Kibana. La partie analyse peut être enrichie par des méthodes statistiques ou des modèles de machine learning afin d’améliorer la détection des anomalies et l’interprétation des résultats.
+Le projet a été réalisé dans le cadre d’un travail collaboratif en Master 1 BIDABI par : 
+**BECHIR YOUSSOUF Awatif** et **MAHFOOZ Nabiha** 
+
