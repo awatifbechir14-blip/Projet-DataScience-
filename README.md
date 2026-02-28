@@ -1,17 +1,15 @@
 # Système de Surveillance des Données de Pression Artérielle patient avec Kafka, Elasticsearch et Kibana
 
 ## 1. Description générale
-Ce projet vise à utiliser une architecture Big Data afin de surveiller les données de pressions artérielle des patients en temps réel. Il permet de detecter automatiquement et rapidement les anomalies, les indexe dans Elasticsearch pour les visualiser dans Kibana.
+Ce projet vise à utiliser une architecture Big Data afin de surveiller les données de pressions artérielle des patients en temps réel. Il permet de detecter automatiquement et rapidement les anomalies telles que l’hypertension ou l’hypotension puis les indexe dans Elasticsearch  pour les visualiser dans Kibana.
 
-Le système repose sur un pipeline de streaming utilisant Apache Kafka comme intermédiaire entre un module de génération de données (producer) et un module de traitement (consumer). Les observations sont analysées afin de détecter automatiquement des anomalies médicales telles que l’hypertension ou l’hypotension.
+Le système repose sur un pipeline de streaming utilisant Apache Kafka comme intermédiaire entre producer qui gènere des données  et consumer qui traite ces données.
+ 
+**L’architecture suit le flux logique suivant :**
 
-Les anomalies détectées sont indexées dans Elasticsearch afin d’être visualisées dans Kibana. Les données normales sont archivées localement au format JSON. Cette approche permet d’illustrer les principes fondamentaux du streaming distribué : découplage des composants, traitement en continu, stockage différencié et intégration avec un moteur d’analyse.
-
-L’architecture suit le flux logique suivant :
-
-Producer Python → Topic Kafka `blood_pressure` → Consumer Python →
-• stockage local (normaux)
-• stockage local + indexation Elasticsearch (anomalies)
+Producer Python envoie les données dans Topic Kafka `blood_pressure` puis le consummer Python lis ces données afin de classer : 
+• Les données normales sont archivées localement au format JSON.
+• Les données anormales sont indéxées dans Elasticsearch (anomalies) et visualiser sur Kibana
 
 ## 2. Génération des Messages FHIR 
 La génération des données est inspirée du standard FHIR (Fast Healthcare Interoperability Resources), et plus précisément de la ressource Observation utilisée pour représenter des mesures cliniques.
