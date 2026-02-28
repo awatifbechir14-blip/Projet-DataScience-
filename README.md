@@ -6,7 +6,6 @@ Ce projet vise à utiliser une architecture Big Data afin de surveiller les donn
 Le système repose sur un pipeline de streaming utilisant Apache Kafka comme intermédiaire entre producer qui gènere des données  et consumer qui traite ces données.
  
 **L’architecture suit le flux logique suivant :**
-
 Producer Python envoie les données dans Topic Kafka `blood_pressure` puis le consummer Python lis ces données afin de classer : 
 • Les données normales sont archivées localement au format JSON.
 • Les données anormales sont indéxées dans Elasticsearch (anomalies) et visualiser sur Kibana
@@ -97,6 +96,60 @@ for message in consumer:
 
 ## 4. Détection des Anomalies (Awatif)
 
+### Rôle de détection des anomalies 
+Le code realisé dans cette partie permet d'analyser les valeurs de pression artérielle de chaque patient 
+reçu depuis Kafka et déterminer si elles sont normales ou anormales en les comparant aux seuils médicaux définis.
+
+### Fichier : `Detection_anamalies.py`
+
+### Seuils médicaux utilisés et types d'anomalies détectées
+
+**Pression systolique :**
+- Valeur normale : entre 90 mmHg et 140 mmHg
+- Anormale Hypertension systolique : supérieure à 140 mmHg
+- Anormale Hypotension systolique : inférieure à 90 mmHg
+
+**Pression diastolique (valeur basse) :**
+- Valeur normale : entre 60 mmHg et 90 mmHg
+- Anormale Hypertension diastolique : supérieure à 90 mmHg
+- Anormale Hypotension diastolique : inférieure à 60 mmHg
+
+### Fonctionnement
+1. La fonction `detecter_anomalies()` reçoit les valeurs 
+   systolique et diastolique du patient
+2. Elle compare chaque valeur avec les seuils médicaux fixés 
+3. Elle retourne une liste d'anomalies détectées :
+   - Si la liste est vide cela signifie que patient est normal
+   - Si la liste est non vide cela signifie que le patient est anormal et  le(s) type(s) d'anomalie(s) sont alors précisés. 
+
+### Code
+```python
+def detecter_anomalies(systolic, diastolic):
+    anomalies = []
+    
+    # Verification systolique
+    if systolic > 140:
+        anomalies.append("hypertension_systolique")
+    elif systolic < 90: 
+        anomalies.append("hypotension_systolique") 
+    
+    # Vérification diastolique
+    if diastolic > 90:
+        anomalies.append("hypertension_diastolique") 
+    elif diastolic < 60:
+        anomalies.append("hypotension_diastolique") 
+
+    return anomalies
+```
+`anomalies = []` : la liste qui sert à stocker les anomalies 
+`anomalies.append("hypertension_systolique")` :  Si la pression systolique est supérieur à 140 mmHg, 
+il stocke l'anomalie "hypertension_systolique" dans la liste anomalies
+`anomalies.append("hypotension_systolique")` : Si la pression systolique est inférieure à 90 mmHg, 
+il stocke l'anomalie "hypotension_systolique" dans la liste anomalies    
+`anomalies.append("hypertension_diastolique")`: Si la pression diastolique est supérieure à 90 mmHg, 
+il stocke l'anomalie "hypertension_diastolique" dans la liste anomalies
+`anomalies.append("hypotension_diastolique")` : Si la pression diastolique est inférieure à 60 mmHg,
+il stocke l'anomalie "hypotension_diastolique" dans la liste anomalies
 ## 5. Traitement des Données (Awatif)
 
 ## 6. Elasticsearch et Kibana (Awatif)
