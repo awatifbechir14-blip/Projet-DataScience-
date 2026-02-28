@@ -142,18 +142,152 @@ def detecter_anomalies(systolic, diastolic):
     return anomalies
 ```
 `anomalies = []` : la liste qui sert à stocker les anomalies 
+
 `anomalies.append("hypertension_systolique")` :  Si la pression systolique est supérieur à 140 mmHg, 
 il stocke l'anomalie "hypertension_systolique" dans la liste anomalies
+
 `anomalies.append("hypotension_systolique")` : Si la pression systolique est inférieure à 90 mmHg, 
-il stocke l'anomalie "hypotension_systolique" dans la liste anomalies    
+il stocke l'anomalie "hypotension_systolique" dans la liste anomalies  
+
 `anomalies.append("hypertension_diastolique")`: Si la pression diastolique est supérieure à 90 mmHg, 
 il stocke l'anomalie "hypertension_diastolique" dans la liste anomalies
+
 `anomalies.append("hypotension_diastolique")` : Si la pression diastolique est inférieure à 60 mmHg,
 il stocke l'anomalie "hypotension_diastolique" dans la liste anomalies
-## 5. Traitement des Données (Awatif)
 
-## 6. Elasticsearch et Kibana (Awatif)
+## 5. Traitement des Données
 
+### Rôle
+Ce module reçoit les données de chaque patient depuis le Consumer,
+appelle le module de détection des anomalies et redirige les données
+vers le bon système de stockage selon le résultat.
+
+**Fichier :** `Stockage_traitement_données.py`
+
+### Fonctionnement
+1. La fonction `traiter_donnees()` reçoit les données du patient
+2. Elle extrait les valeurs `systolic` et `diastolic`
+3. Elle appelle `detecter_anomalies()` pour analyser les valeurs
+4. Selon le résultat :
+   - **Aucune anomalie** → appel de `stocker_patient_normal()`
+   - **Anomalie détectée** → appel de `stocker_patient_anormal()`
+
+### 5.1 Stockage des données normales
+
+Les patients normaux sont archivés localement dans le fichier 
+`patients_normaux.json`, un patient par ligne.
+```python
+def stocker_patient_normal(Données_patient_normal): 
+    with open("patients_normaux.json", "a") as fichier:
+        json.dump(Données_patient_normal, fichier)
+        fichier.write("\n")
+        print(f"Normal — sauvegardé en JSON")
+```
+
+### 5.2 Stockage des données anormales
+
+### Rôle 
+Ce module reçoit les données de chaque patient depuis le Consumer, puis 
+appelle le module de détection des anomalies et met les données
+vers le bon système de stockage selon le résultat.
+
+### Fichier : `Stockage_traitement_données.py`
+
+### Fonctionnement
+1. La fonction `traiter_donnees()` reçoit les données du patient
+2. Elle extrait les valeurs `systolic` et `diastolic`
+3. Elle appelle `detecter_anomalies()` pour analyser les valeurs
+4. Selon le résultat :
+   -  si aucune anomalie n'est détecter il appel  `stocker_patient_normal()`
+   - si au moins une anomalie est  détectée** il appel  `stocker_patient_anormal()`
+
+###  Stockage des données normales
+Les patients normaux sont archivés localement dans le fichier 
+`patients_normaux.json`.
+
+```python
+def stocker_patient_normal(Données_patient_normal): 
+    with open("patients_normaux.json", "a") as fichier: 
+        json.dump(Données_patient_normal, fichier) 
+        fichier.write("\n") 
+        print(f"Normal — sauvegardé en JSON")
+```
+ with open("patients_normaux.json", "a") as fichier: Ouvre le fichier "patients_normaux.json" en mode ajout ("a") pour stocker les données des patients normaux
+ 
+ json.dump(Données_patient_normal, fichier) : Utilise json.dump() pour écrire les données du patient dans le fichier JSON
+ 
+ fichier.write("\n") :  Ajoute une nouvelle ligne après chaque enregistrement pour séparer les patients
+ 
+**Stockage des données anormales**
+Les patients anormaux sont indexés dans Elasticsearch dans l'index `blood_pressure_anomalies` avec les champs suivants :
+- patient_id : Identifiant unique du patient
+- name: Nom complet du patient
+- systolic_pressure: Pression systolique en mmHg
+- diastolic_pressure: Pression diastolique en mmHg
+- anomaly_type: Nature de l'anomalie détectée
+- timestamp: Date et heure de la mesure
+  
+```python
+def stocker_patient_anormal(Données_patient_anormal, anomalies):
+    document = {
+        "patient_id": Données_patient_anormal["patient_id"],
+        "name": Données_patient_anormal["name"],
+        "systolic_pressure": Données_patient_anormal["systolic"],
+        "diastolic_pressure": Données_patient_anormal["diastolic"],
+        "anomaly_type": ", ".join(anomalies),
+        "timestamp": Données_patient_anormal["timestamp"]
+    }
+    
+    connection_elasticsearch.index(index="blood_pressure_anomalies", body=document)
+    print(f" Anormal — envoyé dans Elasticsearch : {document}")
+```
+
+## 6. Elasticsearch et Kibana 
+
+### Index Elasticsearch
+
+Les données anormales sont stockées dans un index dédié `blood_pressure_anomalies` dans Elasticsearch. 
+La structure de cet index est documentée dans le fichier 
+`index_elasticsearch.json`.
+
+La connexion à Elasticsearch se fait via :
+```python
+connection_elasticsearch = Elasticsearch('http://localhost:9200')
+```
+
+Pour vérifier les données stockées, accéder à :
+```
+http://localhost:9200/blood_pressure_anomalies/_search?pretty
+```
+
+### Dashboard Kibana
+
+Le dashboard **"Système de Surveillance Cardiaque"** est accessible sur :
+```
+http://localhost:5601
+```
+
+Il contient 4 visualisations :
+
+#### Nombre total de cas anormaux
+Affiche le compteur total de patients anormaux détectés en temps réel.
+
+#### Répartition des types d'anomalies
+Camembert montrant la distribution des 4 types d'anomalies :
+- hypertension_systolique
+- hypotension_systolique
+- hypertension_diastolique
+- hypotension_diastolique
+
+#### Évolution temporelle des anomalies
+Graphique en barres montrant le nombre d'anomalies détectées 
+par période de temps, décomposé par type d'anomalie.
+
+#### Identification des cas critiques
+Tableau listant les patients les plus critiques :
+- Pression systolique supérieure à 180 mmHg ou 
+- Pression diastolique supérieure à 120 mmHg
+  
 ## 7. Prérequis et Installation
 Le projet nécessite :
 
